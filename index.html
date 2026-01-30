@@ -1,0 +1,2638 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA для iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Акт Цвета">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#007AFF">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Иконки для iOS -->
+    <link rel="apple-touch-icon" href="./icons/icon-180.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.svg">
+    <link rel="apple-touch-icon" sizes="167x167" href="./icons/icon-167.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.svg">
+    
+    <title>Акт Цвета - Massivburg</title>
+    
+    <!-- Библиотеки для экспорта -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* === БАЗОВЫЕ СТИЛИ === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --primary: #007AFF;
+            --primary-dark: #0056CC;
+            --primary-light: #4DA3FF;
+            --bg: #F2F2F7;
+            --card: #ffffff;
+            --text: #000000;
+            --text-secondary: #8E8E93;
+            --border: #C6C6C8;
+            --success: #34C759;
+            --danger: #FF3B30;
+            --warning: #FF9500;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --accent: #007AFF;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-top: var(--safe-top);
+            padding-bottom: calc(70px + var(--safe-bottom));
+        }
+        
+        /* === ХЕДЕР === */
+        .header {
+            background: rgba(242, 242, 247, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: var(--text);
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 17px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header-logo {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            font-weight: 400;
+        }
+        
+        .header-actions {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .header-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-btn:active {
+            background: rgba(0, 122, 255, 0.1);
+        }
+        
+        /* === КОНТЕНТ === */
+        .content {
+            padding: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Десктопная версия */
+        @media (min-width: 768px) {
+            .content {
+                padding: 20px 30px;
+            }
+            
+            .acts-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: none;
+        }
+        
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        
+        .card-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        /* === КНОПКИ === */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            opacity: 0.7;
+        }
+        
+        .btn-secondary {
+            background: rgba(118, 118, 128, 0.12);
+            color: var(--text);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-gold {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-small {
+            padding: 7px 12px;
+            font-size: 13px;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 8px;
+        }
+        
+        /* === ФОРМЫ === */
+        .input {
+            width: 100%;
+            padding: 11px 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            background: rgba(118, 118, 128, 0.12);
+            transition: background 0.2s;
+            color: var(--text);
+        }
+        
+        .input:focus {
+            outline: none;
+            background: rgba(118, 118, 128, 0.18);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: -0.1px;
+        }
+        
+        select.input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238E8E93' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        
+        /* === ЗАГРУЗКА ИЗОБРАЖЕНИЙ === */
+        .image-upload {
+            border: 1.5px dashed rgba(118, 118, 128, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(118, 118, 128, 0.06);
+        }
+        
+        .image-upload:hover, .image-upload.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 122, 255, 0.05);
+        }
+        
+        .image-upload-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        
+        .image-upload-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .image-preview {
+            position: relative;
+            margin-top: 10px;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 10px;
+            object-fit: contain;
+            background: #f0f0f0;
+        }
+        
+        .image-preview-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* === НИЖНЯЯ НАВИГАЦИЯ === */
+        .nav-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(249, 249, 249, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 6px 0;
+            padding-bottom: calc(6px + var(--safe-bottom));
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .nav-icon {
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+        
+        /* === СПИСКИ === */
+        .list {
+            background: var(--card);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: background 0.1s;
+            margin-left: 16px;
+            padding-left: 0;
+        }
+        
+        .list-item:first-child {
+            margin-left: 0;
+            padding-left: 16px;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:active {
+            background: rgba(0, 0, 0, 0.04);
+        }
+        
+        .list-item-image {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-right: 12px;
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+        
+        .list-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .list-item-title {
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .list-item-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        .list-item-badge {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .list-item-arrow {
+            color: rgba(60, 60, 67, 0.3);
+            font-size: 18px;
+            margin-left: 8px;
+            margin-right: 16px;
+        }
+        
+        /* === МОДАЛЬНЫЕ ОКНА === */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        @media (min-width: 768px) {
+            .modal-overlay.active {
+                align-items: center;
+            }
+            
+            .modal {
+                border-radius: 14px !important;
+                max-width: 540px;
+                max-height: 85vh;
+            }
+        }
+        
+        .modal {
+            background: var(--bg);
+            border-radius: 14px 14px 0 0;
+            width: 100%;
+            max-height: 90vh;
+            padding: 0;
+            padding-bottom: var(--safe-bottom);
+            animation: slideUp 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(249, 249, 249, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .modal-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(118, 118, 128, 0.12);
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        
+        .modal-body {
+            padding: 16px;
+        }
+        
+        /* === УВЕДОМЛЕНИЯ === */
+        .toast {
+            position: fixed;
+            top: calc(50px + var(--safe-top));
+            left: 16px;
+            right: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+            transform: translateY(-100px);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 400;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+        }
+        
+        .toast.success { background: rgba(52, 199, 89, 0.95); }
+        .toast.error { background: rgba(255, 59, 48, 0.95); }
+        
+        /* === ПУСТОЕ СОСТОЯНИЕ === */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+        
+        .empty-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        
+        .empty-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        
+        /* === АКТ ЦВЕТА - СПЕЦИФИЧНЫЕ СТИЛИ === */
+        .act-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .act-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+        }
+        
+        .act-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .act-number {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .act-date {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        .act-status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .act-status.draft {
+            background: rgba(255, 149, 0, 0.15);
+            color: #C77700;
+        }
+        
+        .act-status.ready {
+            background: rgba(52, 199, 89, 0.15);
+            color: #248A3D;
+        }
+        
+        .act-rooms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        
+        .act-room-tag {
+            background: rgba(118, 118, 128, 0.12);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* === ПОМЕЩЕНИЕ === */
+        .room-section {
+            margin-bottom: 20px;
+        }
+        
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .room-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .room-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .room-content {
+            background: var(--card);
+            border-radius: 0 0 10px 10px;
+            padding: 12px;
+        }
+        
+        /* === ИЗДЕЛИЕ === */
+        .product-card {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .product-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .product-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #e5e5e5;
+            flex-shrink: 0;
+        }
+        
+        .product-info {
+            flex: 1;
+        }
+        
+        .product-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+        
+        /* === ДЕТАЛЬ ОТДЕЛКИ === */
+        .detail-row {
+            display: flex;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--card);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        .detail-color-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #e5e5e5;
+            flex-shrink: 0;
+        }
+        
+        .detail-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .detail-type {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .detail-material {
+            font-size: 13px;
+            color: var(--primary);
+            margin-top: 1px;
+        }
+        
+        .detail-recipe {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* === PDF PREVIEW === */
+        .pdf-preview {
+            background: white;
+            padding: 40px;
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+        
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #8B4513;
+        }
+        
+        .pdf-title {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .pdf-subtitle {
+            font-size: 14pt;
+            margin-bottom: 5px;
+        }
+        
+        /* === УТИЛИТЫ === */
+        .hidden { display: none !important; }
+        .mb-10 { margin-bottom: 10px; }
+        .mb-20 { margin-bottom: 20px; }
+        .mt-10 { margin-top: 10px; }
+        .mt-20 { margin-top: 20px; }
+        .text-center { text-align: center; }
+        .flex { display: flex; }
+        .flex-wrap { flex-wrap: wrap; }
+        .flex-between { justify-content: space-between; }
+        .flex-center { align-items: center; }
+        .gap-10 { gap: 10px; }
+        .gap-5 { gap: 5px; }
+        .w-full { width: 100%; }
+        
+        /* === КНОПКА НАЗАД === */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+            color: var(--primary);
+            font-size: 17px;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        
+        .back-btn:active {
+            opacity: 0.6;
+        }
+        
+        /* === TABS === */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            background: rgba(118, 118, 128, 0.12);
+            border-radius: 9px;
+            padding: 2px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            border-radius: 7px;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: var(--card);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* Скролл для модалки */
+        
+        /* Многострочные детали */
+        .details-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Хедер -->
+    <header class="header">
+        <h1 id="pageTitle">
+            <div class="header-logo">🎨</div>
+            <span>Акт Цвета</span>
+        </h1>
+        <div class="header-subtitle" id="pageSubtitle">Massivburg</div>
+        <div class="header-actions" id="headerActions"></div>
+    </header>
+    
+    <!-- Основной контент -->
+    <main class="content" id="mainContent">
+        <!-- Контент модулей будет здесь -->
+    </main>
+    
+    <!-- Нижняя навигация -->
+    <nav class="nav-bottom" id="navBottom">
+        <!-- Навигация генерируется динамически -->
+    </nav>
+    
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)App.closeModal()">
+        <div class="modal" id="modalContent">
+            <!-- Контент модального окна -->
+        </div>
+    </div>
+    
+    <!-- Уведомления -->
+    <div class="toast" id="toast"></div>
+
+<script>
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║                    АКТ ЦВЕТА - MASSIVBURG                                 ║
+// ║                    Согласование отделок                                    ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
+
+class AppCore {
+    constructor(config = {}) {
+        this.config = {
+            dbName: config.dbName || 'ColorActDB',
+            dbVersion: config.dbVersion || 1,
+            appName: config.appName || 'Акт Цвета',
+            ...config
+        };
+        
+        this.modules = {};
+        this.activeModule = null;
+        this.db = null;
+        this.events = {};
+        this.currentView = null;
+        this.viewStack = [];
+        
+        this.dom = {
+            content: document.getElementById('mainContent'),
+            nav: document.getElementById('navBottom'),
+            title: document.getElementById('pageTitle'),
+            subtitle: document.getElementById('pageSubtitle'),
+            headerActions: document.getElementById('headerActions'),
+            modal: document.getElementById('modalOverlay'),
+            modalContent: document.getElementById('modalContent'),
+            toast: document.getElementById('toast')
+        };
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ИНИЦИАЛИЗАЦИЯ
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async init() {
+        console.log('🎨 Инициализация Акт Цвета...');
+        
+        await this.initDatabase();
+        
+        for (const [name, module] of Object.entries(this.modules)) {
+            if (module.init) {
+                await module.init(this.api);
+                console.log(`✅ Модуль "${name}" инициализирован`);
+            }
+        }
+        
+        this.renderNavigation();
+        
+        const firstModule = Object.keys(this.modules)[0];
+        if (firstModule) {
+            this.activateModule(firstModule);
+        }
+        
+        this.registerServiceWorker();
+        
+        console.log('✅ Акт Цвета готов к работе');
+        this.emit('coreReady');
+    }
+    
+    async initDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.config.dbName, this.config.dbVersion);
+            
+            request.onerror = () => reject(request.error);
+            
+            request.onsuccess = () => {
+                this.db = request.result;
+                console.log('📦 IndexedDB подключена');
+                resolve();
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                
+                // Хранилище актов
+                if (!db.objectStoreNames.contains('acts')) {
+                    const actsStore = db.createObjectStore('acts', { keyPath: 'id' });
+                    actsStore.createIndex('created', 'created');
+                    actsStore.createIndex('contractNumber', 'contractNumber');
+                }
+                
+                // Хранилище справочников
+                if (!db.objectStoreNames.contains('references')) {
+                    const refStore = db.createObjectStore('references', { keyPath: 'id' });
+                    refStore.createIndex('type', 'type');
+                }
+                
+                console.log('📦 Структура БД создана');
+            };
+        });
+    }
+    
+    get api() {
+        return {
+            db: {
+                save: (store, data) => this.dbSave(store, data),
+                get: (store, id) => this.dbGet(store, id),
+                getAll: (store, indexName, indexValue) => this.dbGetAll(store, indexName, indexValue),
+                delete: (store, id) => this.dbDelete(store, id),
+                clear: (store) => this.dbClear(store)
+            },
+            showModal: (opts) => this.showModal(opts),
+            closeModal: () => this.closeModal(),
+            showToast: (msg, type) => this.showToast(msg, type),
+            formatDate: (date) => this.formatDate(date),
+            generateId: () => this.generateId(),
+            refresh: () => this.refresh(),
+            setTitle: (title, subtitle) => this.setTitle(title, subtitle),
+            setHeaderActions: (html) => this.setHeaderActions(html),
+            emit: (event, data) => this.emit(event, data),
+            on: (event, callback) => this.on(event, callback),
+            navigateTo: (module) => this.activateModule(module),
+            pushView: (view) => this.pushView(view),
+            popView: () => this.popView()
+        };
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // БАЗА ДАННЫХ
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    dbSave(storeName, data) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.put(data);
+            request.onsuccess = () => resolve(data);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    dbGet(storeName, id) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const request = store.get(id);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    dbGetAll(storeName, indexName, indexValue) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            let request;
+            
+            if (indexName && indexValue !== undefined) {
+                const index = store.index(indexName);
+                request = index.getAll(indexValue);
+            } else {
+                request = store.getAll();
+            }
+            
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    dbDelete(storeName, id) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.delete(id);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    dbClear(storeName) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // UI МЕТОДЫ
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    showModal(options) {
+        const { title, body, fullHeight } = options;
+        this.dom.modalContent.innerHTML = `
+            <div class="modal-header">
+                <div class="modal-title">${title}</div>
+                <button class="modal-close" onclick="App.closeModal()">✕</button>
+            </div>
+            <div class="modal-body" ${fullHeight ? 'style="max-height: 70vh"' : ''}>
+                ${body}
+            </div>
+        `;
+        this.dom.modal.classList.add('active');
+    }
+    
+    closeModal() {
+        this.dom.modal.classList.remove('active');
+    }
+    
+    showToast(message, type = 'info') {
+        this.dom.toast.textContent = message;
+        this.dom.toast.className = 'toast ' + type;
+        this.dom.toast.classList.add('show');
+        
+        setTimeout(() => {
+            this.dom.toast.classList.remove('show');
+        }, 3000);
+    }
+    
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+    
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+    
+    setTitle(title, subtitle) {
+        this.dom.title.innerHTML = `
+            <div class="header-logo">🎨</div>
+            <span>${title}</span>
+        `;
+        this.dom.subtitle.textContent = subtitle || 'Massivburg';
+    }
+    
+    setHeaderActions(html) {
+        this.dom.headerActions.innerHTML = html || '';
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // НАВИГАЦИЯ
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    registerModule(name, module) {
+        this.modules[name] = module;
+    }
+    
+    renderNavigation() {
+        const items = Object.entries(this.modules).map(([name, module]) => `
+            <div class="nav-item ${this.activeModule === name ? 'active' : ''}" 
+                 onclick="App.activateModule('${name}')" 
+                 data-module="${name}">
+                <span class="nav-icon">${module.icon}</span>
+                <span>${module.name}</span>
+            </div>
+        `).join('');
+        
+        this.dom.nav.innerHTML = items;
+    }
+    
+    async activateModule(name) {
+        const module = this.modules[name];
+        if (!module) return;
+        
+        this.activeModule = name;
+        this.viewStack = [];
+        this.currentView = null;
+        
+        this.setTitle(module.name, module.subtitle);
+        this.setHeaderActions('');
+        
+        if (module.activate) {
+            await module.activate();
+        }
+        
+        this.render();
+        this.renderNavigation();
+    }
+    
+    pushView(viewConfig) {
+        this.viewStack.push(this.currentView);
+        this.currentView = viewConfig;
+        this.render();
+    }
+    
+    popView() {
+        if (this.viewStack.length > 0) {
+            this.currentView = this.viewStack.pop();
+            this.render();
+        } else {
+            this.currentView = null;
+            this.render();
+        }
+    }
+    
+    render() {
+        const module = this.modules[this.activeModule];
+        if (!module) return;
+        
+        if (this.currentView && this.currentView.render) {
+            this.setTitle(this.currentView.title || module.name, this.currentView.subtitle);
+            this.setHeaderActions(this.currentView.headerActions || '');
+            this.dom.content.innerHTML = this.currentView.render();
+        } else {
+            this.setTitle(module.name, module.subtitle);
+            this.setHeaderActions(module.headerActions ? module.headerActions() : '');
+            this.dom.content.innerHTML = module.render();
+        }
+    }
+    
+    refresh() {
+        this.render();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // СОБЫТИЯ
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    on(event, callback) {
+        if (!this.events[event]) this.events[event] = [];
+        this.events[event].push(callback);
+    }
+    
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(cb => cb(data));
+        }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // SERVICE WORKER
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('✅ Service Worker зарегистрирован'))
+                .catch(err => console.log('❌ Service Worker ошибка:', err));
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// МОДУЛЬ: СПИСОК АКТОВ
+// ═══════════════════════════════════════════════════════════════════════
+
+const ActsModule = {
+    name: 'Акты',
+    icon: '📋',
+    subtitle: 'Список актов цвета',
+    api: null,
+    acts: [],
+    
+    async init(api) {
+        this.api = api;
+        await this.loadActs();
+    },
+    
+    async loadActs() {
+        this.acts = await this.api.db.getAll('acts');
+        this.acts.sort((a, b) => new Date(b.created) - new Date(a.created));
+    },
+    
+    headerActions() {
+        return `
+            <button class="header-btn" onclick="ActsModule.showAddModal()">➕</button>
+        `;
+    },
+    
+    render() {
+        if (this.acts.length === 0) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">🎨</div>
+                    <div class="empty-title">Нет актов цвета</div>
+                    <div class="empty-text">Создайте первый акт согласования отделок</div>
+                    <button class="btn btn-primary" onclick="ActsModule.showAddModal()">
+                        ➕ Создать акт
+                    </button>
+                </div>
+            `;
+        }
+        
+        const actsHtml = this.acts.map(act => {
+            const roomsCount = (act.rooms || []).length;
+            const productsCount = (act.rooms || []).reduce((sum, r) => sum + (r.products || []).length, 0);
+            const status = this.getActStatus(act);
+            
+            return `
+                <div class="card act-card" onclick="ActsModule.openAct('${act.id}')">
+                    <div class="act-header">
+                        <div>
+                            <div class="act-number">Договор ${act.contractNumber || 'б/н'}</div>
+                            <div class="act-date">${this.api.formatDate(act.created)}</div>
+                        </div>
+                        <span class="act-status ${status.class}">${status.text}</span>
+                    </div>
+                    <div class="card-text">
+                        ${roomsCount} помещ. · ${productsCount} изд.
+                    </div>
+                    ${(act.rooms || []).length > 0 ? `
+                        <div class="act-rooms">
+                            ${act.rooms.slice(0, 4).map(r => `
+                                <span class="act-room-tag">${r.name}</span>
+                            `).join('')}
+                            ${act.rooms.length > 4 ? `<span class="act-room-tag">+${act.rooms.length - 4}</span>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        return `
+            <div class="flex flex-between flex-center mb-20">
+                <span style="font-size: 14px; color: var(--text-secondary)">
+                    Всего актов: ${this.acts.length}
+                </span>
+                <button class="btn btn-primary btn-small" onclick="ActsModule.showAddModal()">
+                    ➕ Создать
+                </button>
+            </div>
+            <div class="acts-grid">${actsHtml}</div>
+        `;
+    },
+    
+    getActStatus(act) {
+        const rooms = act.rooms || [];
+        if (rooms.length === 0) return { text: 'Черновик', class: 'draft' };
+        
+        let hasProducts = false;
+        let allComplete = true;
+        
+        for (const room of rooms) {
+            const products = room.products || [];
+            if (products.length > 0) hasProducts = true;
+            
+            for (const product of products) {
+                const details = product.details || [];
+                for (const detail of details) {
+                    if (!detail.recipe || detail.recipe === 'на согласовании') {
+                        allComplete = false;
+                    }
+                }
+            }
+        }
+        
+        if (!hasProducts) return { text: 'Черновик', class: 'draft' };
+        if (allComplete) return { text: 'Готов', class: 'ready' };
+        return { text: 'В работе', class: 'draft' };
+    },
+    
+    showAddModal() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        this.api.showModal({
+            title: 'Новый акт цвета',
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Номер договора</label>
+                    <input type="text" class="input" id="actContractNumber" placeholder="24-25">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Дата договора</label>
+                    <input type="date" class="input" id="actContractDate" value="${today}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Клиент / Объект</label>
+                    <input type="text" class="input" id="actClientName" placeholder="ФИО / Название объекта">
+                </div>
+                <button class="btn btn-primary w-full" onclick="ActsModule.saveAct()">
+                    Создать акт
+                </button>
+            `
+        });
+    },
+    
+    async saveAct() {
+        const contractNumber = document.getElementById('actContractNumber').value.trim();
+        const contractDate = document.getElementById('actContractDate').value;
+        const clientName = document.getElementById('actClientName').value.trim();
+        
+        if (!contractNumber) {
+            this.api.showToast('Введите номер договора', 'error');
+            return;
+        }
+        
+        const act = {
+            id: this.api.generateId(),
+            contractNumber,
+            contractDate,
+            clientName,
+            rooms: [],
+            created: new Date().toISOString(),
+            updated: new Date().toISOString()
+        };
+        
+        await this.api.db.save('acts', act);
+        await this.loadActs();
+        
+        this.api.closeModal();
+        this.api.showToast('✅ Акт создан', 'success');
+        
+        // Сразу открываем созданный акт
+        this.openAct(act.id);
+    },
+    
+    async openAct(actId) {
+        const act = await this.api.db.get('acts', actId);
+        if (!act) return;
+        
+        ActEditorModule.setAct(act);
+        this.api.navigateTo('editor');
+    },
+    
+    async activate() {
+        await this.loadActs();
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// МОДУЛЬ: РЕДАКТОР АКТА
+// ═══════════════════════════════════════════════════════════════════════
+
+const ActEditorModule = {
+    name: 'Редактор',
+    icon: '✏️',
+    subtitle: 'Редактирование акта',
+    api: null,
+    act: null,
+    
+    init(api) {
+        this.api = api;
+    },
+    
+    setAct(act) {
+        this.act = act;
+    },
+    
+    headerActions() {
+        if (!this.act) return '';
+        return `
+            <button class="header-btn" onclick="ActEditorModule.showActMenu()">⋮</button>
+        `;
+    },
+    
+    render() {
+        if (!this.act) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <div class="empty-title">Акт не выбран</div>
+                    <div class="empty-text">Выберите акт из списка</div>
+                    <button class="btn btn-primary" onclick="App.activateModule('acts')">
+                        К списку актов
+                    </button>
+                </div>
+            `;
+        }
+        
+        this.api.setTitle(`Договор ${this.act.contractNumber}`, this.act.clientName || 'Акт цвета');
+        
+        const roomsHtml = (this.act.rooms || []).map((room, roomIndex) => this.renderRoom(room, roomIndex)).join('');
+        
+        return `
+            <div class="back-btn" onclick="App.activateModule('acts')">
+                ← К списку актов
+            </div>
+            
+            <div class="card mb-20">
+                <div class="flex flex-between flex-center">
+                    <div>
+                        <div style="font-size: 13px; color: var(--text-secondary)">Дата договора</div>
+                        <div style="font-weight: 600">${this.api.formatDate(this.act.contractDate || this.act.created)}</div>
+                    </div>
+                    <button class="btn btn-primary btn-small" onclick="ActEditorModule.showExportMenu()">
+                        📤 Экспорт
+                    </button>
+                </div>
+            </div>
+            
+            ${roomsHtml}
+            
+            <button class="btn btn-primary w-full" onclick="ActEditorModule.showAddRoomModal()">
+                ➕ Добавить помещение
+            </button>
+        `;
+    },
+    
+    renderRoom(room, roomIndex) {
+        const productsHtml = (room.products || []).map((product, productIndex) => 
+            this.renderProduct(product, roomIndex, productIndex)
+        ).join('');
+        
+        return `
+            <div class="room-section">
+                <div class="room-header">
+                    <span class="room-title">${room.name}</span>
+                    <div class="room-actions">
+                        <button class="btn btn-small" style="background: rgba(255,255,255,0.2); color: white" 
+                                onclick="ActEditorModule.showAddProductModal(${roomIndex})">
+                            ➕ Изделие
+                        </button>
+                        <button class="btn btn-icon btn-small" style="background: rgba(255,255,255,0.2); color: white"
+                                onclick="ActEditorModule.showRoomMenu(${roomIndex})">
+                            ⋮
+                        </button>
+                    </div>
+                </div>
+                <div class="room-content">
+                    ${productsHtml || '<div class="card-text text-center" style="padding: 20px">Нет изделий</div>'}
+                </div>
+            </div>
+        `;
+    },
+    
+    renderProduct(product, roomIndex, productIndex) {
+        const detailsHtml = (product.details || []).map((detail, detailIndex) => `
+            <div class="detail-row" onclick="ActEditorModule.showEditDetailModal(${roomIndex}, ${productIndex}, ${detailIndex})">
+                ${detail.colorImage ? 
+                    `<img src="${detail.colorImage}" class="detail-color-img" alt="Выкрас">` :
+                    `<div class="detail-color-img" style="display: flex; align-items: center; justify-content: center; font-size: 20px">🎨</div>`
+                }
+                <div class="detail-info">
+                    <div class="detail-type">${detail.detailType || 'Без названия'}</div>
+                    <div class="detail-material">${detail.material || ''}</div>
+                    <div class="detail-recipe">${detail.recipe || 'на согласовании'}</div>
+                </div>
+                <span style="color: var(--text-secondary)">›</span>
+            </div>
+        `).join('');
+        
+        return `
+            <div class="product-card">
+                <div class="product-header">
+                    ${product.image ? 
+                        `<img src="${product.image}" class="product-image" alt="${product.name}">` :
+                        `<div class="product-image" style="display: flex; align-items: center; justify-content: center; font-size: 36px">🪑</div>`
+                    }
+                    <div class="product-info">
+                        <div class="product-name">${product.name || 'Изделие'}</div>
+                        <div class="card-text">${(product.details || []).length} деталей</div>
+                        <div class="product-actions mt-10">
+                            <button class="btn btn-secondary btn-small" 
+                                    onclick="ActEditorModule.showAddDetailModal(${roomIndex}, ${productIndex})">
+                                ➕ Деталь
+                            </button>
+                            <button class="btn btn-secondary btn-small"
+                                    onclick="ActEditorModule.showProductMenu(${roomIndex}, ${productIndex})">
+                                ⋮
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="details-grid">
+                    ${detailsHtml}
+                </div>
+            </div>
+        `;
+    },
+    
+    // === МОДАЛЬНЫЕ ОКНА ===
+    
+    showAddRoomModal() {
+        const commonRooms = ['Мастер-санузел', 'Прихожая', 'Кухня', 'Детская', 'Гардероб', 
+                           'Гостевой СУ', 'Спальня', 'Гостиная', 'Кабинет', 'Столовая'];
+        
+        const suggestionsHtml = commonRooms.map(room => 
+            `<button class="btn btn-secondary btn-small" style="margin: 3px" 
+                     onclick="document.getElementById('roomName').value='${room}'">${room}</button>`
+        ).join('');
+        
+        this.api.showModal({
+            title: 'Добавить помещение',
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Название помещения</label>
+                    <input type="text" class="input" id="roomName" placeholder="Например: Мастер-санузел">
+                </div>
+                <div class="mb-20">
+                    <div class="form-label">Быстрый выбор</div>
+                    <div class="flex flex-wrap">${suggestionsHtml}</div>
+                </div>
+                <button class="btn btn-primary w-full" onclick="ActEditorModule.addRoom()">
+                    Добавить
+                </button>
+            `
+        });
+    },
+    
+    async addRoom() {
+        const name = document.getElementById('roomName').value.trim();
+        if (!name) {
+            this.api.showToast('Введите название помещения', 'error');
+            return;
+        }
+        
+        if (!this.act.rooms) this.act.rooms = [];
+        this.act.rooms.push({
+            id: this.api.generateId(),
+            name,
+            products: []
+        });
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('✅ Помещение добавлено', 'success');
+        this.api.refresh();
+    },
+    
+    showAddProductModal(roomIndex) {
+        const commonProducts = ['Шкаф', 'Тумба', 'Комод', 'Стеллаж', 'Кухня', 
+                               'Система хранения', 'Гардеробная', 'Полка'];
+        
+        const suggestionsHtml = commonProducts.map(p => 
+            `<button class="btn btn-secondary btn-small" style="margin: 3px" 
+                     onclick="document.getElementById('productName').value='${p}'">${p}</button>`
+        ).join('');
+        
+        this.api.showModal({
+            title: 'Добавить изделие',
+            fullHeight: true,
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Название изделия</label>
+                    <input type="text" class="input" id="productName" placeholder="Например: Шкаф">
+                </div>
+                <div class="mb-20">
+                    <div class="form-label">Быстрый выбор</div>
+                    <div class="flex flex-wrap">${suggestionsHtml}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Изображение изделия</label>
+                    <div class="image-upload" id="productImageUpload" onclick="ActEditorModule.uploadProductImage()">
+                        <div class="image-upload-icon">📷</div>
+                        <div class="image-upload-text">Нажмите для загрузки</div>
+                    </div>
+                    <div class="image-preview hidden" id="productImagePreview"></div>
+                    <input type="file" id="productImageInput" accept="image/*" style="display: none" 
+                           onchange="ActEditorModule.handleProductImage(this)">
+                </div>
+                <input type="hidden" id="productImageData">
+                <input type="hidden" id="currentRoomIndex" value="${roomIndex}">
+                <button class="btn btn-primary w-full" onclick="ActEditorModule.addProduct()">
+                    Добавить
+                </button>
+            `
+        });
+    },
+    
+    uploadProductImage() {
+        document.getElementById('productImageInput').click();
+    },
+    
+    handleProductImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            document.getElementById('productImageData').value = base64;
+            document.getElementById('productImageUpload').classList.add('hidden');
+            document.getElementById('productImagePreview').classList.remove('hidden');
+            document.getElementById('productImagePreview').innerHTML = `
+                <img src="${base64}" style="max-width: 100%; max-height: 200px; border-radius: 10px">
+                <button class="image-preview-remove" onclick="ActEditorModule.removeProductImage()">✕</button>
+            `;
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    removeProductImage() {
+        document.getElementById('productImageData').value = '';
+        document.getElementById('productImageUpload').classList.remove('hidden');
+        document.getElementById('productImagePreview').classList.add('hidden');
+        document.getElementById('productImageInput').value = '';
+    },
+    
+    async addProduct() {
+        const name = document.getElementById('productName').value.trim();
+        const image = document.getElementById('productImageData').value;
+        const roomIndex = parseInt(document.getElementById('currentRoomIndex').value);
+        
+        if (!name) {
+            this.api.showToast('Введите название изделия', 'error');
+            return;
+        }
+        
+        if (!this.act.rooms[roomIndex].products) {
+            this.act.rooms[roomIndex].products = [];
+        }
+        
+        this.act.rooms[roomIndex].products.push({
+            id: this.api.generateId(),
+            name,
+            image,
+            details: []
+        });
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('✅ Изделие добавлено', 'success');
+        this.api.refresh();
+    },
+    
+    showAddDetailModal(roomIndex, productIndex) {
+        const commonDetails = ['Корпус', 'Фасады', 'Внутренний корпус', 'Видимый корпус', 
+                              'Фасады внутри и торцы', 'Фасады снаружи', 'Столешница', 'Цоколь'];
+        const commonMaterials = ['МДФ в эмали', 'Шпон Сапеле', 'ЛДСП', 'Грунт', 'Грунт шлифованный',
+                                'Шпон, массив Сапеле', 'Шпон Дуб', 'Массив'];
+        
+        const detailSuggestions = commonDetails.map(d => 
+            `<button class="btn btn-secondary btn-small" style="margin: 2px; font-size: 11px" 
+                     onclick="document.getElementById('detailType').value='${d}'">${d}</button>`
+        ).join('');
+        
+        const materialSuggestions = commonMaterials.map(m => 
+            `<button class="btn btn-secondary btn-small" style="margin: 2px; font-size: 11px" 
+                     onclick="document.getElementById('detailMaterial').value='${m}'">${m}</button>`
+        ).join('');
+        
+        this.api.showModal({
+            title: 'Добавить деталь отделки',
+            fullHeight: true,
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Тип деталей</label>
+                    <input type="text" class="input" id="detailType" placeholder="Например: Корпус">
+                    <div class="flex flex-wrap mt-10">${detailSuggestions}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Тип материала</label>
+                    <input type="text" class="input" id="detailMaterial" placeholder="Например: МДФ в эмали">
+                    <div class="flex flex-wrap mt-10">${materialSuggestions}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Изображение выкраса</label>
+                    <div class="image-upload" id="colorImageUpload" onclick="ActEditorModule.uploadColorImage()">
+                        <div class="image-upload-icon">🎨</div>
+                        <div class="image-upload-text">Нажмите для загрузки</div>
+                    </div>
+                    <div class="image-preview hidden" id="colorImagePreview"></div>
+                    <input type="file" id="colorImageInput" accept="image/*" style="display: none" 
+                           onchange="ActEditorModule.handleColorImage(this)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">№ выкраса</label>
+                    <input type="text" class="input" id="detailColorNumber" placeholder="Опционально">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Рецепт</label>
+                    <textarea class="input" id="detailRecipe" rows="2" placeholder="NCS S 1000-N 10% gloss"></textarea>
+                </div>
+                <input type="hidden" id="colorImageData">
+                <input type="hidden" id="currentRoomIdx" value="${roomIndex}">
+                <input type="hidden" id="currentProductIdx" value="${productIndex}">
+                <button class="btn btn-primary w-full" onclick="ActEditorModule.addDetail()">
+                    Добавить
+                </button>
+            `
+        });
+    },
+    
+    uploadColorImage() {
+        document.getElementById('colorImageInput').click();
+    },
+    
+    handleColorImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            document.getElementById('colorImageData').value = base64;
+            document.getElementById('colorImageUpload').classList.add('hidden');
+            document.getElementById('colorImagePreview').classList.remove('hidden');
+            document.getElementById('colorImagePreview').innerHTML = `
+                <img src="${base64}" style="max-width: 100%; max-height: 150px; border-radius: 10px">
+                <button class="image-preview-remove" onclick="ActEditorModule.removeColorImage()">✕</button>
+            `;
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    removeColorImage() {
+        document.getElementById('colorImageData').value = '';
+        document.getElementById('colorImageUpload').classList.remove('hidden');
+        document.getElementById('colorImagePreview').classList.add('hidden');
+        document.getElementById('colorImageInput').value = '';
+    },
+    
+    async addDetail() {
+        const detailType = document.getElementById('detailType').value.trim();
+        const material = document.getElementById('detailMaterial').value.trim();
+        const colorImage = document.getElementById('colorImageData').value;
+        const colorNumber = document.getElementById('detailColorNumber').value.trim();
+        const recipe = document.getElementById('detailRecipe').value.trim();
+        const roomIndex = parseInt(document.getElementById('currentRoomIdx').value);
+        const productIndex = parseInt(document.getElementById('currentProductIdx').value);
+        
+        if (!detailType) {
+            this.api.showToast('Введите тип деталей', 'error');
+            return;
+        }
+        
+        const product = this.act.rooms[roomIndex].products[productIndex];
+        if (!product.details) product.details = [];
+        
+        product.details.push({
+            id: this.api.generateId(),
+            detailType,
+            material,
+            colorImage,
+            colorNumber,
+            recipe: recipe || 'на согласовании'
+        });
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('✅ Деталь добавлена', 'success');
+        this.api.refresh();
+    },
+    
+    showEditDetailModal(roomIndex, productIndex, detailIndex) {
+        const detail = this.act.rooms[roomIndex].products[productIndex].details[detailIndex];
+        
+        this.api.showModal({
+            title: 'Редактировать деталь',
+            fullHeight: true,
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Тип деталей</label>
+                    <input type="text" class="input" id="editDetailType" value="${detail.detailType || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Тип материала</label>
+                    <input type="text" class="input" id="editDetailMaterial" value="${detail.material || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Изображение выкраса</label>
+                    ${detail.colorImage ? `
+                        <div class="image-preview" id="editColorImagePreview">
+                            <img src="${detail.colorImage}" style="max-width: 100%; max-height: 150px; border-radius: 10px">
+                            <button class="image-preview-remove" onclick="ActEditorModule.removeEditColorImage()">✕</button>
+                        </div>
+                        <div class="image-upload hidden" id="editColorImageUpload" onclick="ActEditorModule.uploadEditColorImage()">
+                            <div class="image-upload-icon">🎨</div>
+                            <div class="image-upload-text">Нажмите для загрузки</div>
+                        </div>
+                    ` : `
+                        <div class="image-upload" id="editColorImageUpload" onclick="ActEditorModule.uploadEditColorImage()">
+                            <div class="image-upload-icon">🎨</div>
+                            <div class="image-upload-text">Нажмите для загрузки</div>
+                        </div>
+                        <div class="image-preview hidden" id="editColorImagePreview"></div>
+                    `}
+                    <input type="file" id="editColorImageInput" accept="image/*" style="display: none" 
+                           onchange="ActEditorModule.handleEditColorImage(this)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">№ выкраса</label>
+                    <input type="text" class="input" id="editDetailColorNumber" value="${detail.colorNumber || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Рецепт</label>
+                    <textarea class="input" id="editDetailRecipe" rows="2">${detail.recipe || ''}</textarea>
+                </div>
+                <input type="hidden" id="editColorImageData" value="${detail.colorImage || ''}">
+                <input type="hidden" id="editRoomIdx" value="${roomIndex}">
+                <input type="hidden" id="editProductIdx" value="${productIndex}">
+                <input type="hidden" id="editDetailIdx" value="${detailIndex}">
+                <div class="flex gap-10">
+                    <button class="btn btn-danger" style="flex: 1" onclick="ActEditorModule.deleteDetail()">
+                        🗑️ Удалить
+                    </button>
+                    <button class="btn btn-primary" style="flex: 2" onclick="ActEditorModule.saveEditDetail()">
+                        💾 Сохранить
+                    </button>
+                </div>
+            `
+        });
+    },
+    
+    uploadEditColorImage() {
+        document.getElementById('editColorImageInput').click();
+    },
+    
+    handleEditColorImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            document.getElementById('editColorImageData').value = base64;
+            document.getElementById('editColorImageUpload').classList.add('hidden');
+            document.getElementById('editColorImagePreview').classList.remove('hidden');
+            document.getElementById('editColorImagePreview').innerHTML = `
+                <img src="${base64}" style="max-width: 100%; max-height: 150px; border-radius: 10px">
+                <button class="image-preview-remove" onclick="ActEditorModule.removeEditColorImage()">✕</button>
+            `;
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    removeEditColorImage() {
+        document.getElementById('editColorImageData').value = '';
+        document.getElementById('editColorImageUpload').classList.remove('hidden');
+        document.getElementById('editColorImagePreview').classList.add('hidden');
+        document.getElementById('editColorImageInput').value = '';
+    },
+    
+    async saveEditDetail() {
+        const roomIndex = parseInt(document.getElementById('editRoomIdx').value);
+        const productIndex = parseInt(document.getElementById('editProductIdx').value);
+        const detailIndex = parseInt(document.getElementById('editDetailIdx').value);
+        
+        const detail = this.act.rooms[roomIndex].products[productIndex].details[detailIndex];
+        
+        detail.detailType = document.getElementById('editDetailType').value.trim();
+        detail.material = document.getElementById('editDetailMaterial').value.trim();
+        detail.colorImage = document.getElementById('editColorImageData').value;
+        detail.colorNumber = document.getElementById('editDetailColorNumber').value.trim();
+        detail.recipe = document.getElementById('editDetailRecipe').value.trim() || 'на согласовании';
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('✅ Деталь сохранена', 'success');
+        this.api.refresh();
+    },
+    
+    async deleteDetail() {
+        if (!confirm('Удалить эту деталь?')) return;
+        
+        const roomIndex = parseInt(document.getElementById('editRoomIdx').value);
+        const productIndex = parseInt(document.getElementById('editProductIdx').value);
+        const detailIndex = parseInt(document.getElementById('editDetailIdx').value);
+        
+        this.act.rooms[roomIndex].products[productIndex].details.splice(detailIndex, 1);
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('🗑️ Деталь удалена', 'success');
+        this.api.refresh();
+    },
+    
+    // === МЕНЮ ===
+    
+    showActMenu() {
+        this.api.showModal({
+            title: 'Действия с актом',
+            body: `
+                <div class="list">
+                    <div class="list-item" onclick="ActEditorModule.editActInfo()">
+                        <div class="list-item-content">
+                            <div class="list-item-title">✏️ Редактировать информацию</div>
+                        </div>
+                    </div>
+                    <div class="list-item" onclick="ActEditorModule.duplicateAct()">
+                        <div class="list-item-content">
+                            <div class="list-item-title">📋 Дублировать акт</div>
+                        </div>
+                    </div>
+                    <div class="list-item" onclick="ActEditorModule.showExportMenu()">
+                        <div class="list-item-content">
+                            <div class="list-item-title">📤 Экспорт</div>
+                            <div class="list-item-subtitle">PDF, Excel</div>
+                        </div>
+                    </div>
+                    <div class="list-item" onclick="ActEditorModule.deleteAct()" style="color: var(--danger)">
+                        <div class="list-item-content">
+                            <div class="list-item-title">🗑️ Удалить акт</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+    },
+    
+    showExportMenu() {
+        this.api.showModal({
+            title: 'Экспорт акта',
+            body: `
+                <div class="list">
+                    <div class="list-item" onclick="ActEditorModule.exportToPDF()">
+                        <div class="list-item-content">
+                            <div class="list-item-title">📄 Экспорт в PDF</div>
+                            <div class="list-item-subtitle">Для печати и отправки</div>
+                        </div>
+                    </div>
+                    <div class="list-item" onclick="ActEditorModule.exportToExcel()">
+                        <div class="list-item-content">
+                            <div class="list-item-title">📊 Экспорт в Excel</div>
+                            <div class="list-item-subtitle">Таблица с данными</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+    },
+    
+    showRoomMenu(roomIndex) {
+        const room = this.act.rooms[roomIndex];
+        
+        this.api.showModal({
+            title: room.name,
+            body: `
+                <div class="list">
+                    <div class="list-item" onclick="ActEditorModule.editRoom(${roomIndex})">
+                        <div class="list-item-content">
+                            <div class="list-item-title">✏️ Переименовать</div>
+                        </div>
+                    </div>
+                    <div class="list-item" onclick="ActEditorModule.deleteRoom(${roomIndex})" style="color: var(--danger)">
+                        <div class="list-item-content">
+                            <div class="list-item-title">🗑️ Удалить помещение</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+    },
+    
+    showProductMenu(roomIndex, productIndex) {
+        const product = this.act.rooms[roomIndex].products[productIndex];
+        
+        this.api.showModal({
+            title: product.name,
+            body: `
+                <div class="list">
+                    <div class="list-item" onclick="ActEditorModule.editProduct(${roomIndex}, ${productIndex})">
+                        <div class="list-item-content">
+                            <div class="list-item-title">✏️ Редактировать</div>
+                        </div>
+                    </div>
+                    <div class="list-item" onclick="ActEditorModule.deleteProduct(${roomIndex}, ${productIndex})" style="color: var(--danger)">
+                        <div class="list-item-content">
+                            <div class="list-item-title">🗑️ Удалить изделие</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+    },
+    
+    async editRoom(roomIndex) {
+        const room = this.act.rooms[roomIndex];
+        const newName = prompt('Новое название помещения:', room.name);
+        if (newName && newName.trim()) {
+            room.name = newName.trim();
+            await this.saveAct();
+            this.api.closeModal();
+            this.api.refresh();
+        }
+    },
+    
+    async deleteRoom(roomIndex) {
+        if (!confirm('Удалить это помещение со всеми изделиями?')) return;
+        
+        this.act.rooms.splice(roomIndex, 1);
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('🗑️ Помещение удалено', 'success');
+        this.api.refresh();
+    },
+    
+    editProduct(roomIndex, productIndex) {
+        const product = this.act.rooms[roomIndex].products[productIndex];
+        
+        this.api.showModal({
+            title: 'Редактировать изделие',
+            fullHeight: true,
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Название изделия</label>
+                    <input type="text" class="input" id="editProductName" value="${product.name || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Изображение изделия</label>
+                    ${product.image ? `
+                        <div class="image-preview" id="editProductImagePreview">
+                            <img src="${product.image}" style="max-width: 100%; max-height: 200px; border-radius: 10px">
+                            <button class="image-preview-remove" onclick="ActEditorModule.removeEditProductImage()">✕</button>
+                        </div>
+                        <div class="image-upload hidden" id="editProductImageUpload" onclick="ActEditorModule.uploadEditProductImage()">
+                            <div class="image-upload-icon">📷</div>
+                            <div class="image-upload-text">Нажмите для загрузки</div>
+                        </div>
+                    ` : `
+                        <div class="image-upload" id="editProductImageUpload" onclick="ActEditorModule.uploadEditProductImage()">
+                            <div class="image-upload-icon">📷</div>
+                            <div class="image-upload-text">Нажмите для загрузки</div>
+                        </div>
+                        <div class="image-preview hidden" id="editProductImagePreview"></div>
+                    `}
+                    <input type="file" id="editProductImageInput" accept="image/*" style="display: none" 
+                           onchange="ActEditorModule.handleEditProductImage(this)">
+                </div>
+                <input type="hidden" id="editProductImageData" value="${product.image || ''}">
+                <input type="hidden" id="editProdRoomIdx" value="${roomIndex}">
+                <input type="hidden" id="editProdIdx" value="${productIndex}">
+                <button class="btn btn-primary w-full" onclick="ActEditorModule.saveEditProduct()">
+                    💾 Сохранить
+                </button>
+            `
+        });
+    },
+    
+    uploadEditProductImage() {
+        document.getElementById('editProductImageInput').click();
+    },
+    
+    handleEditProductImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            document.getElementById('editProductImageData').value = base64;
+            document.getElementById('editProductImageUpload').classList.add('hidden');
+            document.getElementById('editProductImagePreview').classList.remove('hidden');
+            document.getElementById('editProductImagePreview').innerHTML = `
+                <img src="${base64}" style="max-width: 100%; max-height: 200px; border-radius: 10px">
+                <button class="image-preview-remove" onclick="ActEditorModule.removeEditProductImage()">✕</button>
+            `;
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    removeEditProductImage() {
+        document.getElementById('editProductImageData').value = '';
+        document.getElementById('editProductImageUpload').classList.remove('hidden');
+        document.getElementById('editProductImagePreview').classList.add('hidden');
+        document.getElementById('editProductImageInput').value = '';
+    },
+    
+    async saveEditProduct() {
+        const roomIndex = parseInt(document.getElementById('editProdRoomIdx').value);
+        const productIndex = parseInt(document.getElementById('editProdIdx').value);
+        
+        const product = this.act.rooms[roomIndex].products[productIndex];
+        product.name = document.getElementById('editProductName').value.trim();
+        product.image = document.getElementById('editProductImageData').value;
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('✅ Изделие сохранено', 'success');
+        this.api.refresh();
+    },
+    
+    async deleteProduct(roomIndex, productIndex) {
+        if (!confirm('Удалить это изделие?')) return;
+        
+        this.act.rooms[roomIndex].products.splice(productIndex, 1);
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('🗑️ Изделие удалено', 'success');
+        this.api.refresh();
+    },
+    
+    editActInfo() {
+        this.api.showModal({
+            title: 'Редактировать акт',
+            body: `
+                <div class="form-group">
+                    <label class="form-label">Номер договора</label>
+                    <input type="text" class="input" id="editActNumber" value="${this.act.contractNumber || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Дата договора</label>
+                    <input type="date" class="input" id="editActDate" value="${this.act.contractDate || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Клиент / Объект</label>
+                    <input type="text" class="input" id="editActClient" value="${this.act.clientName || ''}">
+                </div>
+                <button class="btn btn-primary w-full" onclick="ActEditorModule.saveActInfo()">
+                    💾 Сохранить
+                </button>
+            `
+        });
+    },
+    
+    async saveActInfo() {
+        this.act.contractNumber = document.getElementById('editActNumber').value.trim();
+        this.act.contractDate = document.getElementById('editActDate').value;
+        this.act.clientName = document.getElementById('editActClient').value.trim();
+        
+        await this.saveAct();
+        this.api.closeModal();
+        this.api.showToast('✅ Информация сохранена', 'success');
+        this.api.refresh();
+    },
+    
+    async duplicateAct() {
+        const newAct = JSON.parse(JSON.stringify(this.act));
+        newAct.id = this.api.generateId();
+        newAct.contractNumber = this.act.contractNumber + ' (копия)';
+        newAct.created = new Date().toISOString();
+        newAct.updated = new Date().toISOString();
+        
+        await this.api.db.save('acts', newAct);
+        this.api.closeModal();
+        this.api.showToast('✅ Акт дублирован', 'success');
+        this.api.navigateTo('acts');
+    },
+    
+    async deleteAct() {
+        if (!confirm('Удалить этот акт? Это действие нельзя отменить.')) return;
+        
+        await this.api.db.delete('acts', this.act.id);
+        this.act = null;
+        this.api.closeModal();
+        this.api.showToast('🗑️ Акт удален', 'success');
+        this.api.navigateTo('acts');
+    },
+    
+    // === PDF ЭКСПОРТ ===
+    
+    exportToPDF() {
+        this.api.closeModal();
+        
+        const pdfContent = this.generatePDFContent();
+        
+        // Открываем в новом окне для печати
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Акт цвета - Договор ${this.act.contractNumber}</title>
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 15mm;
+                    }
+                    body {
+                        font-family: 'Times New Roman', serif;
+                        font-size: 11pt;
+                        line-height: 1.3;
+                        color: #000;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 20px;
+                        padding-bottom: 10px;
+                        border-bottom: 1px solid #000;
+                    }
+                    .title {
+                        font-size: 12pt;
+                        margin-bottom: 10px;
+                    }
+                    .subtitle {
+                        font-size: 14pt;
+                        font-weight: bold;
+                    }
+                    .room {
+                        margin-top: 25px;
+                        page-break-inside: avoid;
+                    }
+                    .room-title {
+                        font-size: 13pt;
+                        font-weight: bold;
+                        text-align: center;
+                        margin-bottom: 15px;
+                        padding: 5px;
+                        background: #f0f0f0;
+                    }
+                    .product {
+                        margin-bottom: 20px;
+                        page-break-inside: avoid;
+                    }
+                    .product-row {
+                        display: flex;
+                        gap: 15px;
+                        align-items: flex-start;
+                    }
+                    .product-image {
+                        width: 100px;
+                        height: auto;
+                        max-height: 120px;
+                        object-fit: contain;
+                        border: 1px solid #ddd;
+                    }
+                    .product-table {
+                        flex: 1;
+                        border-collapse: collapse;
+                        width: 100%;
+                        font-size: 10pt;
+                    }
+                    .product-table th, .product-table td {
+                        border: 1px solid #000;
+                        padding: 5px 8px;
+                        text-align: left;
+                        vertical-align: top;
+                    }
+                    .product-table th {
+                        background: #f5f5f5;
+                        font-weight: bold;
+                    }
+                    .product-name {
+                        font-weight: bold;
+                        background: #f9f9f9;
+                    }
+                    .color-img {
+                        width: 40px;
+                        height: 40px;
+                        object-fit: cover;
+                    }
+                    .date {
+                        text-align: right;
+                        font-size: 10pt;
+                        margin-bottom: 5px;
+                    }
+                    @media print {
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="no-print" style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                    <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer; background: #007AFF; color: white; border: none; border-radius: 6px;">
+                        🖨️ Печать / Сохранить PDF
+                    </button>
+                    <span style="margin-left: 15px; color: #666;">Нажмите Ctrl+P или используйте кнопку</span>
+                </div>
+                ${pdfContent}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    },
+    
+    // === EXCEL ЭКСПОРТ ===
+    
+    exportToExcel() {
+        this.api.closeModal();
+        
+        try {
+            const wb = XLSX.utils.book_new();
+            const act = this.act;
+            
+            // Создаём данные для листа
+            const data = [];
+            
+            // Заголовок
+            data.push(['Приложение №Х к ДОГОВОРУ КУПЛИ-ПРОДАЖИ И МОНТАЖА ИЗДЕЛИЙ']);
+            data.push([`№${act.contractNumber} от ${this.api.formatDate(act.contractDate || act.created)}`]);
+            data.push(['']);
+            data.push([`АКТ ЦВЕТА к договору ${act.contractNumber}`]);
+            data.push(['']);
+            
+            // Для каждого помещения
+            for (const room of (act.rooms || [])) {
+                data.push(['']);
+                data.push([room.name]);
+                data.push(['']);
+                
+                // Для каждого изделия
+                for (const product of (room.products || [])) {
+                    // Заголовок таблицы
+                    data.push([product.name, 'Тип деталей', 'Тип материала', '№ выкраса', 'Рецепт']);
+                    
+                    // Детали
+                    for (const detail of (product.details || [])) {
+                        data.push([
+                            '',
+                            detail.detailType || '',
+                            detail.material || '',
+                            detail.colorNumber || '',
+                            detail.recipe || ''
+                        ]);
+                    }
+                    
+                    data.push(['']);
+                }
+            }
+            
+            // Создаём лист
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Настройка ширины колонок
+            ws['!cols'] = [
+                { wch: 25 },  // A - Изделие
+                { wch: 25 },  // B - Тип деталей
+                { wch: 20 },  // C - Тип материала
+                { wch: 12 },  // D - № выкраса
+                { wch: 35 }   // E - Рецепт
+            ];
+            
+            // Объединение ячеек для заголовков
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },  // Первая строка
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },  // Вторая строка
+                { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } }   // АКТ ЦВЕТА
+            ];
+            
+            // Добавляем лист в книгу
+            XLSX.utils.book_append_sheet(wb, ws, 'Акт согласования отделок');
+            
+            // Создаём второй лист с детальной информацией
+            const detailData = [];
+            detailData.push(['Помещение', 'Изделие', 'Тип деталей', 'Тип материала', '№ выкраса', 'Рецепт']);
+            
+            for (const room of (act.rooms || [])) {
+                for (const product of (room.products || [])) {
+                    for (const detail of (product.details || [])) {
+                        detailData.push([
+                            room.name,
+                            product.name,
+                            detail.detailType || '',
+                            detail.material || '',
+                            detail.colorNumber || '',
+                            detail.recipe || ''
+                        ]);
+                    }
+                }
+            }
+            
+            const ws2 = XLSX.utils.aoa_to_sheet(detailData);
+            ws2['!cols'] = [
+                { wch: 20 },
+                { wch: 20 },
+                { wch: 25 },
+                { wch: 20 },
+                { wch: 12 },
+                { wch: 35 }
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws2, 'Детальная таблица');
+            
+            // Скачиваем файл
+            const fileName = `Акт_цвета_${act.contractNumber}_${this.api.formatDate(new Date().toISOString()).replace(/\./g, '-')}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            this.api.showToast('📊 Excel файл скачан', 'success');
+            
+        } catch (error) {
+            console.error('Excel export error:', error);
+            this.api.showToast('❌ Ошибка экспорта', 'error');
+        }
+    },
+    
+    generatePDFContent() {
+        const act = this.act;
+        const date = this.api.formatDate(new Date().toISOString());
+        
+        let html = `
+            <div class="date">${date}</div>
+            <div class="header">
+                <div class="title">Приложение №Х к ДОГОВОРУ КУПЛИ-ПРОДАЖИ И МОНТАЖА ИЗДЕЛИЙ<br>№${act.contractNumber} от ${this.api.formatDate(act.contractDate || act.created)}</div>
+                <div class="subtitle">АКТ ЦВЕТА к договору ${act.contractNumber}</div>
+            </div>
+        `;
+        
+        for (const room of (act.rooms || [])) {
+            html += `<div class="room"><div class="room-title">${room.name}</div>`;
+            
+            for (const product of (room.products || [])) {
+                html += `<div class="product"><div class="product-row">`;
+                
+                if (product.image) {
+                    html += `<img src="${product.image}" class="product-image">`;
+                }
+                
+                html += `<table class="product-table">
+                    <tr>
+                        <th class="product-name">${product.name}</th>
+                        <th>Тип деталей</th>
+                        <th>Тип материала</th>
+                        <th>Изобр. выкраса</th>
+                        <th>№ выкраса</th>
+                        <th>Рецепт</th>
+                    </tr>`;
+                
+                for (const detail of (product.details || [])) {
+                    html += `<tr>
+                        <td></td>
+                        <td>${detail.detailType || ''}</td>
+                        <td>${detail.material || ''}</td>
+                        <td>${detail.colorImage ? `<img src="${detail.colorImage}" class="color-img">` : ''}</td>
+                        <td>${detail.colorNumber || ''}</td>
+                        <td>${detail.recipe || ''}</td>
+                    </tr>`;
+                }
+                
+                html += `</table></div></div>`;
+            }
+            
+            html += `</div>`;
+        }
+        
+        return html;
+    },
+    
+    async saveAct() {
+        this.act.updated = new Date().toISOString();
+        await this.api.db.save('acts', this.act);
+    },
+    
+    activate() {
+        // При активации модуля
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// МОДУЛЬ: НАСТРОЙКИ
+// ═══════════════════════════════════════════════════════════════════════
+
+const SettingsModule = {
+    name: 'Настройки',
+    icon: '⚙️',
+    subtitle: 'Параметры приложения',
+    api: null,
+    
+    init(api) {
+        this.api = api;
+    },
+    
+    render() {
+        return `
+            <div class="list mb-20">
+                <div class="list-item" onclick="SettingsModule.exportData()">
+                    <div class="list-item-content">
+                        <div class="list-item-title">📤 Экспорт данных</div>
+                        <div class="list-item-subtitle">Скачать резервную копию</div>
+                    </div>
+                    <span class="list-item-arrow">›</span>
+                </div>
+                <div class="list-item" onclick="SettingsModule.importData()">
+                    <div class="list-item-content">
+                        <div class="list-item-title">📥 Импорт данных</div>
+                        <div class="list-item-subtitle">Загрузить из файла</div>
+                    </div>
+                    <span class="list-item-arrow">›</span>
+                </div>
+                <div class="list-item" onclick="SettingsModule.clearData()">
+                    <div class="list-item-content">
+                        <div class="list-item-title">🗑️ Очистить данные</div>
+                        <div class="list-item-subtitle">Удалить все акты</div>
+                    </div>
+                    <span class="list-item-arrow">›</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">ℹ️ О приложении</div>
+                <div class="card-text">
+                    <strong>Акт Цвета</strong> v1.0<br>
+                    Massivburg<br><br>
+                    Приложение для создания и управления актами согласования отделок.<br><br>
+                    PWA · IndexedDB · Offline Ready
+                </div>
+            </div>
+        `;
+    },
+    
+    async exportData() {
+        const allActs = await this.api.db.getAll('acts');
+        const exportData = {
+            version: '1.0',
+            exported: new Date().toISOString(),
+            acts: allActs
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `color-acts-backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        
+        URL.revokeObjectURL(url);
+        this.api.showToast('📤 Данные экспортированы', 'success');
+    },
+    
+    importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                const acts = data.acts || data;
+                let count = 0;
+                
+                for (const act of (Array.isArray(acts) ? acts : [])) {
+                    if (act.id) {
+                        await this.api.db.save('acts', act);
+                        count++;
+                    }
+                }
+                
+                this.api.showToast(`📥 Импортировано актов: ${count}`, 'success');
+                this.api.emit('dataChanged');
+            } catch (error) {
+                this.api.showToast('❌ Ошибка импорта', 'error');
+                console.error(error);
+            }
+        };
+        input.click();
+    },
+    
+    clearData() {
+        if (confirm('Удалить все акты? Это действие нельзя отменить.')) {
+            this.api.db.clear('acts');
+            this.api.showToast('🗑️ Данные очищены', 'success');
+            this.api.emit('dataChanged');
+        }
+    },
+    
+    activate() {
+        console.log('⚙️ Настройки активированы');
+    }
+};
+
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║                         ЗАПУСК ПРИЛОЖЕНИЯ                                 ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
+
+const App = new AppCore({
+    dbName: 'ColorActDB',
+    dbVersion: 1,
+    appName: 'Акт Цвета'
+});
+
+App.registerModule('acts', ActsModule);
+App.registerModule('editor', ActEditorModule);
+App.registerModule('settings', SettingsModule);
+
+// Подписка на события
+App.on('dataChanged', () => {
+    ActsModule.loadActs().then(() => {
+        if (App.activeModule === 'acts') {
+            App.refresh();
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+window.App = App;
+</script>
+</body>
+</html>
