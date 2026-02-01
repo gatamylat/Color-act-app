@@ -14,6 +14,11 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.svg">
+    
     <!-- Иконки для iOS -->
     <link rel="apple-touch-icon" href="./icons/icon-180.svg">
     <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.svg">
@@ -840,6 +845,156 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
+        /* === АККОРДЕОН === */
+        .accordion-toggle {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .accordion-arrow {
+            transition: transform 0.2s;
+            font-size: 12px;
+        }
+        
+        .accordion-arrow.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .accordion-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .accordion-content.collapsed {
+            max-height: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* === СОРТИРОВКА ДЕТАЛЕЙ === */
+        .detail-sort-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: rgba(118, 118, 128, 0.12);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .detail-sort-btn:active {
+            background: rgba(118, 118, 128, 0.2);
+        }
+        
+        .detail-sort-btn:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+        
+        /* === КОМПАКТНЫЙ ВИД НА ДЕСКТОПЕ === */
+        @media (min-width: 768px) {
+            .content {
+                padding: 16px 24px;
+            }
+            
+            .room-section {
+                margin-bottom: 16px;
+            }
+            
+            .room-header {
+                padding: 10px 14px;
+            }
+            
+            .room-content {
+                padding: 10px;
+            }
+            
+            .product-card {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .product-header {
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .product-image {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .detail-row {
+                padding: 8px 10px;
+                margin-bottom: 6px;
+            }
+            
+            .detail-color-img {
+                width: 40px;
+                height: 40px;
+            }
+            
+            /* Хедер редактора на десктопе */
+            .editor-header-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 16px;
+                background: var(--card);
+                border-radius: 10px;
+                margin-bottom: 16px;
+                gap: 16px;
+            }
+            
+            .editor-header-left {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            
+            .editor-header-center {
+                flex: 1;
+            }
+            
+            .editor-header-right {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+        
+        /* Мобильный хедер редактора */
+        @media (max-width: 767px) {
+            .editor-header-bar {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 0;
+                margin-bottom: 12px;
+            }
+            
+            .editor-header-left {
+                order: 1;
+            }
+            
+            .editor-header-center {
+                order: 3;
+                width: 100%;
+            }
+            
+            .editor-header-right {
+                order: 2;
+                margin-left: auto;
+            }
+        }
+        
         /* Скролл для модалки */
         
         /* Многострочные детали */
@@ -1443,21 +1598,31 @@ const ActEditorModule = {
         
         this.api.setTitle(`Договор ${this.act.contractNumber}`, this.act.clientName || 'Акт цвета');
         
+        // Инициализация состояния аккордеона
+        if (!this.accordionState) {
+            this.accordionState = { rooms: {}, products: {} };
+        }
+        
         const roomsHtml = (this.act.rooms || []).map((room, roomIndex) => this.renderRoom(room, roomIndex)).join('');
         
         return `
-            <div class="back-btn" onclick="App.activateModule('acts')">
-                ← К списку актов
-            </div>
-            
-            <div class="card mb-20">
-                <div class="flex flex-between flex-center">
-                    <div>
-                        <div style="font-size: 13px; color: var(--text-secondary)">Дата договора</div>
-                        <div style="font-weight: 600">${this.api.formatDate(this.act.contractDate || this.act.created)}</div>
-                    </div>
+            <div class="editor-header-bar">
+                <div class="editor-header-left">
+                    <span class="back-btn" onclick="App.activateModule('acts')" style="margin: 0">
+                        ← Назад
+                    </span>
+                </div>
+                <div class="editor-header-center">
+                    <span style="font-size: 13px; color: var(--text-secondary)">
+                        Дата: ${this.api.formatDate(this.act.contractDate || this.act.created)}
+                    </span>
+                </div>
+                <div class="editor-header-right">
                     <button class="btn btn-primary btn-small" onclick="ActEditorModule.showExportMenu()">
                         📤 Экспорт
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="ActEditorModule.showActMenu()">
+                        ⋮
                     </button>
                 </div>
             </div>
@@ -1471,6 +1636,7 @@ const ActEditorModule = {
     },
     
     renderRoom(room, roomIndex) {
+        const isCollapsed = this.accordionState?.rooms?.[roomIndex] === true;
         const productsHtml = (room.products || []).map((product, productIndex) => 
             this.renderProduct(product, roomIndex, productIndex)
         ).join('');
@@ -1478,19 +1644,22 @@ const ActEditorModule = {
         return `
             <div class="room-section">
                 <div class="room-header">
-                    <span class="room-title">${room.name}</span>
+                    <span class="room-title accordion-toggle" onclick="ActEditorModule.toggleRoom(${roomIndex})">
+                        <span class="accordion-arrow ${isCollapsed ? 'collapsed' : ''}">▼</span>
+                        ${room.name}
+                    </span>
                     <div class="room-actions">
                         <button class="btn btn-small" style="background: rgba(255,255,255,0.2); color: white" 
-                                onclick="ActEditorModule.showAddProductModal(${roomIndex})">
+                                onclick="event.stopPropagation(); ActEditorModule.showAddProductModal(${roomIndex})">
                             ➕ Изделие
                         </button>
                         <button class="btn btn-icon btn-small" style="background: rgba(255,255,255,0.2); color: white"
-                                onclick="ActEditorModule.showRoomMenu(${roomIndex})">
+                                onclick="event.stopPropagation(); ActEditorModule.showRoomMenu(${roomIndex})">
                             ⋮
                         </button>
                     </div>
                 </div>
-                <div class="room-content">
+                <div class="room-content accordion-content ${isCollapsed ? 'collapsed' : ''}" id="room-content-${roomIndex}">
                     ${productsHtml || '<div class="card-text text-center" style="padding: 20px">Нет изделий</div>'}
                 </div>
             </div>
@@ -1498,13 +1667,23 @@ const ActEditorModule = {
     },
     
     renderProduct(product, roomIndex, productIndex) {
-        const detailsHtml = (product.details || []).map((detail, detailIndex) => `
-            <div class="detail-row" onclick="ActEditorModule.showEditDetailModal(${roomIndex}, ${productIndex}, ${detailIndex})">
+        const productKey = `${roomIndex}-${productIndex}`;
+        const isCollapsed = this.accordionState?.products?.[productKey] === true;
+        const details = product.details || [];
+        
+        const detailsHtml = details.map((detail, detailIndex) => `
+            <div class="detail-row">
+                <div class="detail-sort-btns" style="display: flex; flex-direction: column; gap: 2px; margin-right: 6px;">
+                    <button class="detail-sort-btn" onclick="ActEditorModule.moveDetail(${roomIndex}, ${productIndex}, ${detailIndex}, -1)" 
+                            ${detailIndex === 0 ? 'disabled' : ''}>↑</button>
+                    <button class="detail-sort-btn" onclick="ActEditorModule.moveDetail(${roomIndex}, ${productIndex}, ${detailIndex}, 1)"
+                            ${detailIndex === details.length - 1 ? 'disabled' : ''}>↓</button>
+                </div>
                 ${detail.colorImage ? 
-                    `<img src="${detail.colorImage}" class="detail-color-img" alt="Выкрас">` :
-                    `<div class="detail-color-img" style="display: flex; align-items: center; justify-content: center; font-size: 20px">🎨</div>`
+                    `<img src="${detail.colorImage}" class="detail-color-img" alt="Выкрас" onclick="ActEditorModule.showEditDetailModal(${roomIndex}, ${productIndex}, ${detailIndex})">` :
+                    `<div class="detail-color-img" style="display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer" onclick="ActEditorModule.showEditDetailModal(${roomIndex}, ${productIndex}, ${detailIndex})">🎨</div>`
                 }
-                <div class="detail-info">
+                <div class="detail-info" style="cursor: pointer" onclick="ActEditorModule.showEditDetailModal(${roomIndex}, ${productIndex}, ${detailIndex})">
                     <div class="detail-type">${detail.detailType || 'Без названия'}</div>
                     <div class="detail-material">${detail.material || ''}</div>
                     <div class="detail-recipe">${detail.recipe || 'на согласовании'}</div>
@@ -1518,11 +1697,14 @@ const ActEditorModule = {
                 <div class="product-header">
                     ${product.image ? 
                         `<img src="${product.image}" class="product-image" alt="${product.name}">` :
-                        `<div class="product-image" style="display: flex; align-items: center; justify-content: center; font-size: 36px">🪑</div>`
+                        `<div class="product-image" style="display: flex; align-items: center; justify-content: center; font-size: 32px">🪑</div>`
                     }
                     <div class="product-info">
-                        <div class="product-name">${product.name || 'Изделие'}</div>
-                        <div class="card-text">${(product.details || []).length} деталей</div>
+                        <div class="product-name accordion-toggle" onclick="ActEditorModule.toggleProduct(${roomIndex}, ${productIndex})">
+                            <span class="accordion-arrow ${isCollapsed ? 'collapsed' : ''}">▼</span>
+                            ${product.name || 'Изделие'}
+                        </div>
+                        <div class="card-text">${details.length} деталей</div>
                         <div class="product-actions mt-10">
                             <button class="btn btn-secondary btn-small" 
                                     onclick="ActEditorModule.showAddDetailModal(${roomIndex}, ${productIndex})">
@@ -1535,11 +1717,40 @@ const ActEditorModule = {
                         </div>
                     </div>
                 </div>
-                <div class="details-grid">
+                <div class="details-grid accordion-content ${isCollapsed ? 'collapsed' : ''}" id="product-content-${roomIndex}-${productIndex}">
                     ${detailsHtml}
                 </div>
             </div>
         `;
+    },
+    
+    // Аккордеон - переключение помещения
+    toggleRoom(roomIndex) {
+        if (!this.accordionState) this.accordionState = { rooms: {}, products: {} };
+        this.accordionState.rooms[roomIndex] = !this.accordionState.rooms[roomIndex];
+        this.api.refresh();
+    },
+    
+    // Аккордеон - переключение изделия
+    toggleProduct(roomIndex, productIndex) {
+        if (!this.accordionState) this.accordionState = { rooms: {}, products: {} };
+        const key = `${roomIndex}-${productIndex}`;
+        this.accordionState.products[key] = !this.accordionState.products[key];
+        this.api.refresh();
+    },
+    
+    // Сортировка деталей
+    async moveDetail(roomIndex, productIndex, detailIndex, direction) {
+        const details = this.act.rooms[roomIndex].products[productIndex].details;
+        const newIndex = detailIndex + direction;
+        
+        if (newIndex < 0 || newIndex >= details.length) return;
+        
+        // Меняем местами
+        [details[detailIndex], details[newIndex]] = [details[newIndex], details[detailIndex]];
+        
+        await this.saveAct();
+        this.api.refresh();
     },
     
     // === МОДАЛЬНЫЕ ОКНА ===
@@ -1617,7 +1828,7 @@ const ActEditorModule = {
                     <label class="form-label">Изображение изделия</label>
                     <div class="image-upload" id="productImageUpload" onclick="ActEditorModule.uploadProductImage()">
                         <div class="image-upload-icon">📷</div>
-                        <div class="image-upload-text">Нажмите для загрузки</div>
+                        <div class="image-upload-text">Нажмите или вставьте (Ctrl+V)</div>
                     </div>
                     <div class="image-preview hidden" id="productImagePreview"></div>
                     <input type="file" id="productImageInput" accept="image/*" style="display: none" 
@@ -1724,7 +1935,7 @@ const ActEditorModule = {
                     <label class="form-label">Изображение выкраса</label>
                     <div class="image-upload" id="colorImageUpload" onclick="ActEditorModule.uploadColorImage()">
                         <div class="image-upload-icon">🎨</div>
-                        <div class="image-upload-text">Нажмите для загрузки</div>
+                        <div class="image-upload-text">Нажмите или вставьте (Ctrl+V)</div>
                     </div>
                     <div class="image-preview hidden" id="colorImagePreview"></div>
                     <input type="file" id="colorImageInput" accept="image/*" style="display: none" 
@@ -1833,12 +2044,12 @@ const ActEditorModule = {
                         </div>
                         <div class="image-upload hidden" id="editColorImageUpload" onclick="ActEditorModule.uploadEditColorImage()">
                             <div class="image-upload-icon">🎨</div>
-                            <div class="image-upload-text">Нажмите для загрузки</div>
+                            <div class="image-upload-text">Нажмите или вставьте (Ctrl+V)</div>
                         </div>
                     ` : `
                         <div class="image-upload" id="editColorImageUpload" onclick="ActEditorModule.uploadEditColorImage()">
                             <div class="image-upload-icon">🎨</div>
-                            <div class="image-upload-text">Нажмите для загрузки</div>
+                            <div class="image-upload-text">Нажмите или вставьте (Ctrl+V)</div>
                         </div>
                         <div class="image-preview hidden" id="editColorImagePreview"></div>
                     `}
@@ -2072,12 +2283,12 @@ const ActEditorModule = {
                         </div>
                         <div class="image-upload hidden" id="editProductImageUpload" onclick="ActEditorModule.uploadEditProductImage()">
                             <div class="image-upload-icon">📷</div>
-                            <div class="image-upload-text">Нажмите для загрузки</div>
+                            <div class="image-upload-text">Нажмите или вставьте (Ctrl+V)</div>
                         </div>
                     ` : `
                         <div class="image-upload" id="editProductImageUpload" onclick="ActEditorModule.uploadEditProductImage()">
                             <div class="image-upload-icon">📷</div>
-                            <div class="image-upload-text">Нажмите для загрузки</div>
+                            <div class="image-upload-text">Нажмите или вставьте (Ctrl+V)</div>
                         </div>
                         <div class="image-preview hidden" id="editProductImagePreview"></div>
                     `}
@@ -2221,86 +2432,93 @@ const ActEditorModule = {
                 <title>Акт цвета - Договор ${this.act.contractNumber}</title>
                 <style>
                     @page {
-                        size: A4;
-                        margin: 15mm;
+                        size: A4 landscape;
+                        margin: 10mm;
                     }
                     body {
                         font-family: 'Times New Roman', serif;
-                        font-size: 11pt;
-                        line-height: 1.3;
+                        font-size: 10pt;
+                        line-height: 1.2;
                         color: #000;
                     }
                     .header {
                         text-align: center;
-                        margin-bottom: 20px;
-                        padding-bottom: 10px;
+                        margin-bottom: 15px;
+                        padding-bottom: 8px;
                         border-bottom: 1px solid #000;
                     }
                     .title {
-                        font-size: 12pt;
-                        margin-bottom: 10px;
+                        font-size: 11pt;
+                        margin-bottom: 5px;
                     }
                     .subtitle {
-                        font-size: 14pt;
+                        font-size: 12pt;
                         font-weight: bold;
-                    }
-                    .room {
-                        margin-top: 25px;
-                        page-break-inside: avoid;
-                    }
-                    .room-title {
-                        font-size: 13pt;
-                        font-weight: bold;
-                        text-align: center;
-                        margin-bottom: 15px;
-                        padding: 5px;
-                        background: #f0f0f0;
-                    }
-                    .product {
-                        margin-bottom: 20px;
-                        page-break-inside: avoid;
-                    }
-                    .product-row {
-                        display: flex;
-                        gap: 15px;
-                        align-items: flex-start;
-                    }
-                    .product-image {
-                        width: 100px;
-                        height: auto;
-                        max-height: 120px;
-                        object-fit: contain;
-                        border: 1px solid #ddd;
-                    }
-                    .product-table {
-                        flex: 1;
-                        border-collapse: collapse;
-                        width: 100%;
-                        font-size: 10pt;
-                    }
-                    .product-table th, .product-table td {
-                        border: 1px solid #000;
-                        padding: 5px 8px;
-                        text-align: left;
-                        vertical-align: top;
-                    }
-                    .product-table th {
-                        background: #f5f5f5;
-                        font-weight: bold;
-                    }
-                    .product-name {
-                        font-weight: bold;
-                        background: #f9f9f9;
-                    }
-                    .color-img {
-                        width: 40px;
-                        height: 40px;
-                        object-fit: cover;
                     }
                     .date {
                         text-align: right;
-                        font-size: 10pt;
+                        font-size: 9pt;
                         margin-bottom: 5px;
+                    }
+                    .room {
+                        margin-top: 15px;
+                    }
+                    .room-title {
+                        font-size: 11pt;
+                        font-weight: bold;
+                        text-align: center;
+                        margin-bottom: 10px;
+                        padding: 4px;
+                        background: #e8e8e8;
+                    }
+                    .product {
+                        margin-bottom: 12px;
+                        page-break-inside: avoid;
+                    }
+                    
+                    /* Фиксированная таблица */
+                    .product-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 9pt;
+                        table-layout: fixed;
+                    }
+                    .product-table th, .product-table td {
+                        border: 1px solid #000;
+                        padding: 4px 6px;
+                        text-align: left;
+                        vertical-align: top;
+                        word-wrap: break-word;
+                    }
+                    .product-table th {
+                        background: #f0f0f0;
+                        font-weight: bold;
+                        font-size: 8pt;
+                    }
+                    
+                    /* Фиксированная ширина столбцов */
+                    .col-image { width: 85px; }
+                    .col-name { width: 110px; }
+                    .col-details { width: 150px; }
+                    .col-material { width: 140px; }
+                    .col-color-img { width: 55px; }
+                    .col-color-num { width: 55px; }
+                    .col-recipe { width: auto; }
+                    
+                    .product-image {
+                        width: 80px;
+                        height: auto;
+                        max-height: 80px;
+                        object-fit: contain;
+                    }
+                    .product-image-placeholder {
+                        width: 80px;
+                        height: 50px;
+                    }
+                    .color-img {
+                        width: 45px;
+                        height: 45px;
+                        object-fit: cover;
                     }
                     @media print {
                         .no-print { display: none; }
@@ -2308,7 +2526,7 @@ const ActEditorModule = {
                 </style>
             </head>
             <body>
-                <div class="no-print" style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                <div class="no-print" style="margin-bottom: 15px; padding: 10px; background: #f0f0f0; border-radius: 8px;">
                     <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer; background: #007AFF; color: white; border: none; border-radius: 6px;">
                         🖨️ Печать / Сохранить PDF
                     </button>
@@ -2447,34 +2665,62 @@ const ActEditorModule = {
             html += `<div class="room"><div class="room-title">${room.name}</div>`;
             
             for (const product of (room.products || [])) {
-                html += `<div class="product"><div class="product-row">`;
+                const details = product.details || [];
+                const rowspan = Math.max(details.length, 1);
                 
-                if (product.image) {
-                    html += `<img src="${product.image}" class="product-image">`;
-                }
+                html += `<div class="product">
+                    <table class="product-table">
+                        <colgroup>
+                            <col class="col-image">
+                            <col class="col-name">
+                            <col class="col-details">
+                            <col class="col-material">
+                            <col class="col-color-img">
+                            <col class="col-color-num">
+                            <col class="col-recipe">
+                        </colgroup>
+                        <tr>
+                            <th></th>
+                            <th>${product.name}</th>
+                            <th>Тип деталей</th>
+                            <th>Тип материала</th>
+                            <th>Изобр. выкраса</th>
+                            <th>№ выкраса</th>
+                            <th>Рецепт</th>
+                        </tr>`;
                 
-                html += `<table class="product-table">
-                    <tr>
-                        <th class="product-name">${product.name}</th>
-                        <th>Тип деталей</th>
-                        <th>Тип материала</th>
-                        <th>Изобр. выкраса</th>
-                        <th>№ выкраса</th>
-                        <th>Рецепт</th>
-                    </tr>`;
-                
-                for (const detail of (product.details || [])) {
+                if (details.length === 0) {
                     html += `<tr>
+                        <td>${product.image ? 
+                            `<img src="${product.image}" class="product-image">` : 
+                            `<div class="product-image-placeholder"></div>`}</td>
                         <td></td>
-                        <td>${detail.detailType || ''}</td>
-                        <td>${detail.material || ''}</td>
-                        <td>${detail.colorImage ? `<img src="${detail.colorImage}" class="color-img">` : ''}</td>
-                        <td>${detail.colorNumber || ''}</td>
-                        <td>${detail.recipe || ''}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                     </tr>`;
+                } else {
+                    details.forEach((detail, idx) => {
+                        html += `<tr>`;
+                        if (idx === 0) {
+                            html += `<td rowspan="${rowspan}">${product.image ? 
+                                `<img src="${product.image}" class="product-image">` : 
+                                `<div class="product-image-placeholder"></div>`}</td>`;
+                        }
+                        html += `
+                            <td></td>
+                            <td>${detail.detailType || ''}</td>
+                            <td>${detail.material || ''}</td>
+                            <td>${detail.colorImage ? `<img src="${detail.colorImage}" class="color-img">` : ''}</td>
+                            <td>${detail.colorNumber || ''}</td>
+                            <td>${detail.recipe || ''}</td>
+                        </tr>`;
+                    });
                 }
                 
-                html += `</table></div></div>`;
+                html += `</table></div>`;
             }
             
             html += `</div>`;
@@ -2634,6 +2880,97 @@ App.on('dataChanged', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// Закрытие модалки по Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && App.dom.modal.classList.contains('active')) {
+        // Проверяем, есть ли заполненные поля в модалке
+        const inputs = App.dom.modalContent.querySelectorAll('input, textarea, select');
+        let hasContent = false;
+        
+        inputs.forEach(input => {
+            if (input.type !== 'hidden' && input.value && input.value.trim()) {
+                hasContent = true;
+            }
+        });
+        
+        // Если есть контент - пробуем сохранить
+        if (hasContent) {
+            const saveBtn = App.dom.modalContent.querySelector('.btn-primary');
+            if (saveBtn && saveBtn.onclick) {
+                saveBtn.click();
+                return;
+            }
+        }
+        
+        // Иначе просто закрываем
+        App.closeModal();
+    }
+});
+
+// Вставка изображений через Ctrl+V / paste
+document.addEventListener('paste', async (e) => {
+    // Проверяем, открыта ли модалка
+    if (!App.dom.modal.classList.contains('active')) return;
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (const item of items) {
+        if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            
+            const file = item.getAsFile();
+            if (!file) continue;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64 = event.target.result;
+                
+                // Ищем активное поле для изображения в модалке
+                // Приоритет: colorImage > productImage
+                const colorImageData = document.getElementById('colorImageData') || 
+                                       document.getElementById('editColorImageData');
+                const productImageData = document.getElementById('productImageData') || 
+                                         document.getElementById('editProductImageData');
+                
+                if (colorImageData) {
+                    colorImageData.value = base64;
+                    const preview = document.getElementById('colorImagePreview') || 
+                                   document.getElementById('editColorImagePreview');
+                    const upload = document.getElementById('colorImageUpload') || 
+                                  document.getElementById('editColorImageUpload');
+                    if (preview && upload) {
+                        upload.classList.add('hidden');
+                        preview.classList.remove('hidden');
+                        preview.innerHTML = `
+                            <img src="${base64}" style="max-width: 100%; max-height: 150px; border-radius: 10px">
+                            <button class="image-preview-remove" onclick="ActEditorModule.removeColorImage ? ActEditorModule.removeColorImage() : ActEditorModule.removeEditColorImage()">✕</button>
+                        `;
+                    }
+                    App.showToast('📷 Изображение вставлено', 'success');
+                } else if (productImageData) {
+                    productImageData.value = base64;
+                    const preview = document.getElementById('productImagePreview') || 
+                                   document.getElementById('editProductImagePreview');
+                    const upload = document.getElementById('productImageUpload') || 
+                                  document.getElementById('editProductImageUpload');
+                    if (preview && upload) {
+                        upload.classList.add('hidden');
+                        preview.classList.remove('hidden');
+                        preview.innerHTML = `
+                            <img src="${base64}" style="max-width: 100%; max-height: 200px; border-radius: 10px">
+                            <button class="image-preview-remove" onclick="ActEditorModule.removeProductImage ? ActEditorModule.removeProductImage() : ActEditorModule.removeEditProductImage()">✕</button>
+                        `;
+                    }
+                    App.showToast('📷 Изображение вставлено', 'success');
+                }
+            };
+            reader.readAsDataURL(file);
+            break;
+        }
+    }
+});
 
 window.App = App;
 </script>
