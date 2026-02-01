@@ -3,7 +3,7 @@
 // ║                    Massivburg - Offline Support                           ║
 // ╚═══════════════════════════════════════════════════════════════════════════╝
 
-const CACHE_NAME = 'color-act-v2';
+const CACHE_NAME = 'color-act-v4';
 const CACHE_URLS = [
     './',
     './index.html',
