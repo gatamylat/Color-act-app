@@ -1546,7 +1546,8 @@ const ActEditorModule = {
     
     showAddRoomModal() {
         const commonRooms = ['Мастер-санузел', 'Прихожая', 'Кухня', 'Детская', 'Гардероб', 
-                           'Гостевой СУ', 'Спальня', 'Гостиная', 'Кабинет', 'Столовая'];
+                           'Гостевой СУ', 'Спальня', 'Гостиная', 'Кабинет', 'Столовая',
+                           'Холл', 'Коридор', 'Офис'];
         
         const suggestionsHtml = commonRooms.map(room => 
             `<button class="btn btn-secondary btn-small" style="margin: 3px" 
@@ -1592,8 +1593,8 @@ const ActEditorModule = {
     },
     
     showAddProductModal(roomIndex) {
-        const commonProducts = ['Шкаф', 'Тумба', 'Комод', 'Стеллаж', 'Кухня', 
-                               'Система хранения', 'Гардеробная', 'Полка'];
+        const commonProducts = ['Шкаф', 'Шкаф встроенный', 'Тумба', 'Комод', 'Стеллаж', 'Кухня', 
+                               'Система хранения', 'Гардеробная', 'Стеновая панель', 'Портал'];
         
         const suggestionsHtml = commonProducts.map(p => 
             `<button class="btn btn-secondary btn-small" style="margin: 3px" 
@@ -1689,9 +1690,11 @@ const ActEditorModule = {
     
     showAddDetailModal(roomIndex, productIndex) {
         const commonDetails = ['Корпус', 'Фасады', 'Внутренний корпус', 'Видимый корпус', 
-                              'Фасады внутри и торцы', 'Фасады снаружи', 'Столешница', 'Цоколь'];
-        const commonMaterials = ['МДФ в эмали', 'Шпон Сапеле', 'ЛДСП', 'Грунт', 'Грунт шлифованный',
-                                'Шпон, массив Сапеле', 'Шпон Дуб', 'Массив'];
+                              'Фасады внутри и торцы', 'Фасады снаружи', 'Задняя стенка', 
+                              'Столешница', 'Цоколь', 'Полки', 'Стеновая панель'];
+        const commonMaterials = ['МДФ в эмали', 'МДФ шпон Дуб', 'ЛДСП Egger 16мм', 'Грунт', 
+                                'Грунт шлифованный', 'Шпон Дуб', 'Массив Дуб', 'ХДФ 3,5мм',
+                                'Зеркало', 'Стекло'];
         
         const detailSuggestions = commonDetails.map(d => 
             `<button class="btn btn-secondary btn-small" style="margin: 2px; font-size: 11px" 
